@@ -1,5 +1,7 @@
 import re
-from scapy.all import sniff, TCP, UDP, IP, Raw
+from scapy.all import sniff, TCP, UDP, IP, Raw, get_if_addr, conf
+
+from flaggedPayloadsLogger import addLogData
 
 payloadSignatures = {
     "SQL Injection" : "(?i)(\%27|\'|--|\%23|#|(\b(select|union|insert|update|delete|drop|where|having|or|and)\b))",
@@ -11,27 +13,32 @@ payloadSignatures = {
 }
 
 def SignaturesBasedDetection_Payloads(packet):
+    thisPcIp = get_if_addr(conf.iface)
     if TCP in packet:
         if IP in packet and Raw in packet:
             try:
-                data = packet[Raw].load.decode()
-                for i in payloadSignatures.keys():
-                    if (re.search(payloadSignatures[i], data)):
-                        print(f"{i} attack detected")
-                        print(f"SRC_IP: {packet[IP].src}, SRC_PORT: {packet[TCP].sport}")
-                        print(f"Packet data: {data}")
-                        print("--------------------------------------------------------------")
+                if (packet[IP].src != thisPcIp):
+                    data = packet[Raw].load.decode()
+                    for i in payloadSignatures.keys():
+                        if (re.search(payloadSignatures[i], data)):
+                            print(f"{i} attack detected")
+                            print(f"SRC_IP: {packet[IP].src}, SRC_PORT: {packet[TCP].sport}")
+                            print(f"Packet data: {data}")
+                            print("--------------------------------------------------------------")
+                            addLogData(packet.time, packet[IP].src, packet[TCP].sport, packet[IP].dst, packet[TCP].dport, "TCP", i, data)
             except:
                 return
     if UDP in packet:
         if IP in packet and Raw in packet:
             try:
-                data = packet[Raw].load.decode()
-                for i in payloadSignatures.keys():
-                    if (re.search(payloadSignatures[i], data)):
-                        print(f"{i} attack detected")
-                        print(f"SRC_IP: {packet[IP].src}, SRC_PORT: {packet[UDP].sport}")
-                        print(f"Packet data: {data}")
-                        print("--------------------------------------------------------------")
+                if (packet[IP].src != thisPcIp):
+                    data = packet[Raw].load.decode()
+                    for i in payloadSignatures.keys():
+                        if (re.search(payloadSignatures[i], data)):
+                            print(f"{i} attack detected")
+                            print(f"SRC_IP: {packet[IP].src}, SRC_PORT: {packet[UDP].sport}")
+                            print(f"Packet data: {data}")
+                            print("--------------------------------------------------------------")
+                            addLogData(packet.time, packet[IP].src, packet[UDP].sport, packet[IP].dst, packet[UDP].dport, "UDP", i, data)
             except:
                 return

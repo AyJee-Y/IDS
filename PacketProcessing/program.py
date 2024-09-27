@@ -4,6 +4,7 @@ from scapy.all import sniff, IP, TCP, UDP, Raw
 from concurrent.futures import ThreadPoolExecutor
 import time
 
+from flaggedPayloadsLogger import initializeLog, saveData
 from payloadSignature import SignaturesBasedDetection_Payloads
 
 # Shared queue for packet processing
@@ -37,7 +38,9 @@ def packet_processor(packet_queue, analyzer_functions):
 
 def main():
     analyzer_functions = [SignaturesBasedDetection_Payloads]
+    logLocation = "packetProcessing\\logs\\flaggedPayloads.csv"
     
+    initializeLog(logLocation)
     # Start the packet sniffer (producer)
     sniffer_thread = Thread(target=packet_sniffer, args=(packet_queue,))
     sniffer_thread.start()
@@ -62,6 +65,7 @@ def main():
         thread.join()
 
     sniffer_thread.join()
+    saveData(logLocation)
 
 if __name__ == "__main__":
     main()

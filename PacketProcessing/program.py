@@ -23,7 +23,7 @@ def packet_processor(packet_queue, analyzer_functions):
     with ThreadPoolExecutor(max_workers=len(analyzer_functions)) as executor:
         while not stop_event.is_set():
             try:
-                packet = packet_queue.get(timeout=1)
+                packet = packet_queue.get(block=False)
                 # Submit all analyzer functions to the thread pool
                 futures = [executor.submit(func, packet) for func in analyzer_functions]
                 # Wait for all analyzer functions to complete
@@ -31,7 +31,9 @@ def packet_processor(packet_queue, analyzer_functions):
                     future.result()
                 packet_queue.task_done()
             except queue.Empty:
-                continue
+                time.sleep(0.01)
+            except Exception as e:
+                print(f'Error processing packet: {e}')
 
 def main():
     analyzer_functions = [SignaturesBasedDetection_Payloads]

@@ -13,19 +13,25 @@ payloadSignatures = {
 def SignaturesBasedDetection_Payloads(packet):
     if TCP in packet:
         if IP in packet and Raw in packet:
-            data = packet[Raw].load.decode()
-            for i in payloadSignatures.keys():
-                if (re.search(payloadSignatures[i], data)):
-                    print(f"{i} attack detected")
-                    print(f"SRC_IP: {packet[IP].src}, SRC_PORT: {packet[TCP].sport}")
-                    print(f"Packet data: {data}")
-                    print()
+            try:
+                data = packet[Raw].load.decode()
+                for i in payloadSignatures.keys():
+                    if (re.search(payloadSignatures[i], data)):
+                        print(f"{i} attack detected")
+                        print(f"SRC_IP: {packet[IP].src}, SRC_PORT: {packet[TCP].sport}")
+                        print(f"Packet data: {data}")
+                        print("--------------------------------------------------------------")
+            except:
+                return
     if UDP in packet:
         if IP in packet and Raw in packet:
-            data = packet[Raw].load.decode()
-            for i in payloadSignatures.keys():
-                if (re.search(payloadSignatures[i], data)):
-                    print(f"{i} attack detected")
-                    print(f"SRC_IP: {packet[IP].src}, SRC_PORT: {packet[UDP].sport}")
-                    print(f"Packet data: {data}")
-                    print()
+            try:
+                data = packet[Raw].load.decode()
+                for i in payloadSignatures.keys():
+                    if (re.search(payloadSignatures[i], data)):
+                        print(f"{i} attack detected")
+                        print(f"SRC_IP: {packet[IP].src}, SRC_PORT: {packet[UDP].sport}")
+                        print(f"Packet data: {data}")
+                        print("--------------------------------------------------------------")
+            except:
+                return

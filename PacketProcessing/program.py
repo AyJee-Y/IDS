@@ -46,8 +46,7 @@ def main():
     sniffer_thread = Thread(target=packet_sniffer, args=(packet_queue,))
     sniffer_thread.start()
 
-    finish = True
-    cleanUp_thread = Thread(target=cleanUpOldPackets, args=(finish,))
+    cleanUp_thread = Thread(target=cleanUpOldPackets, args=(stop_event,))
     cleanUp_thread.start()
 
     # Start multiple packet processors (consumers)
@@ -62,16 +61,15 @@ def main():
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        finish = False
         print("Stopping IDS...")
         stop_event.set()
-
+    
     # Wait for all processors to finish
     for thread in processor_threads:
         thread.join()
 
     cleanUp_thread.join()
-
+    print("waiting for sniffer")
     sniffer_thread.join()
     saveData(logLocation)
 

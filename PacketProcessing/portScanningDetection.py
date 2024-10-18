@@ -6,7 +6,7 @@ import threading
 connections = defaultdict(lambda: defaultdict(list))
 
 PORT_SCAN_THRESHOLD = 200
-PORT_SCAN_TIME_WINDOW = 60
+PORT_SCAN_TIME_WINDOW = 300
 
 connectionsLock = threading.Lock()
 
@@ -30,8 +30,8 @@ def analyze_packet(packet):
             if len(unique_ports) >= PORT_SCAN_THRESHOLD:
                 print(f"PORT SCAN - FROM {dst_ip}")
 
-def cleanUpOldPackets(finish):
-    while finish:
+def cleanUpOldPackets(stop_event):
+    while not stop_event.is_set():
         time.sleep(CLEANUP_INTERVAL)
         performCleanup()
 

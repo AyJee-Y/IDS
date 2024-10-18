@@ -10,6 +10,8 @@ PORT_SCAN_TIME_WINDOW = 60
 
 connectionsLock = threading.Lock
 
+CLEANUP_INTERVAL = 600
+
 def analyze_packet(packet):
     if IP in packet and (TCP in packet or UDP in packet):
         src_ip = packet[IP].src
@@ -27,6 +29,25 @@ def analyze_packet(packet):
             unique_ports = set(port for port, _ in connections[src_ip][dst_ip])
             if len(unique_ports) >= PORT_SCAN_THRESHOLD:
                 print(f"PORT SCAN - FROM {dst_ip}")
+
+def cleanUpOldPackets():
+    while True:
+        time.sleep(CLEANUP_INTERVAL)
+        performCleanup()
+
+def performCleanup():
+    current_time = time.time()
+    with connectionsLock:
+        for src_ip in list(connections.keys()):
+            for dst_ip in list(connections[src_ip].keys()):
+                connections[src_ip][dst_ip] = [
+                    (port, timestamp) for port, timestamp in connections[src_ip][dst_ip]
+                    if current_time - timestamp <= (CLEANUP_INTERVAL * 2)
+                ]
+                if not connections[src_ip][dst_ip]:
+                    del connections[src_ip][dst_ip]
+            if not connections[src_ip]:
+                del connections[src_ip]
 
 def detectPortScan(packet):
     analyze_packet(packet)

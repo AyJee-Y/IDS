@@ -6,6 +6,7 @@ import time
 
 from flaggedPayloadsLogger import initializeLog, saveData
 from payloadSignature import SignaturesBasedDetection_Payloads
+from portScanningDetection import detectPortScan, cleanUpOldPackets
 
 # Shared queue for packet processing
 packet_queue = queue.Queue(maxsize=1000)  # Adjust maxsize as needed
@@ -37,13 +38,17 @@ def packet_processor(packet_queue, analyzer_functions):
                 print(f'Error processing packet: {e}')
 
 def main():
-    analyzer_functions = [SignaturesBasedDetection_Payloads]
+    analyzer_functions = [SignaturesBasedDetection_Payloads, detectPortScan]
     logLocation = "packetProcessing\\logs\\flaggedPayloads.csv"
     
     initializeLog(logLocation)
     # Start the packet sniffer (producer)
     sniffer_thread = Thread(target=packet_sniffer, args=(packet_queue,))
     sniffer_thread.start()
+
+    finish = True
+    cleanUp_thread = Thread(target=cleanUpOldPackets, args=(finish,))
+    cleanUp_thread.start()
 
     # Start multiple packet processors (consumers)
     num_processors = 4  # Adjust based on your needs
@@ -57,12 +62,15 @@ def main():
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
+        finish = False
         print("Stopping IDS...")
         stop_event.set()
 
     # Wait for all processors to finish
     for thread in processor_threads:
         thread.join()
+
+    cleanUp_thread.join()
 
     sniffer_thread.join()
     saveData(logLocation)
